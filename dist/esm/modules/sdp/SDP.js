@@ -281,6 +281,13 @@ SDP.prototype.toJingle = function (elem, thecreator) {
                 // TODO: handle params
                 elem.up();
             }
+            if (mline.media === 'video') {
+                const bandwidth = { value: "950", type: "AS" };
+                elem.c('bandwidth').t(bandwidth.value);
+                delete bandwidth.value;
+                elem.attrs(bandwidth);
+                elem.up(); // end of bandwidth
+            }
             elem.up(); // end of description
         }
         // map ice-ufrag/pwd, dtls fingerprint, candidates
@@ -494,6 +501,12 @@ SDP.prototype.jingle2media = function (content) {
                 .map((_, payloadType) => payloadType.getAttribute('id'))
                 .get();
         sdp += `${SDPUtil.buildMLine(media)}\r\n`;
+    }
+    // Search for the bandwidth parameter here
+    const bandwidth = desc.find('>bandwidth');
+    if (bandwidth.length) {
+        sdp += 'b=AS:950\r\n';
+        //sdp+= `b=AS:950\r\n`;
     }
     sdp += 'c=IN IP4 0.0.0.0\r\n';
     if (!sctp.length) {

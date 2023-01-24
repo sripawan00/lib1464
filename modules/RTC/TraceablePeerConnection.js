@@ -1627,10 +1627,63 @@ TraceablePeerConnection.prototype._isSharingScreen = function() {
  * @returns {RTCSessionDescription} the munged description.
  */
 TraceablePeerConnection.prototype._mungeCodecOrder = function(description) {
-    if (!this.codecPreference) {
+//    if (!this.codecPreference) {
+//		logger.info(` inytelog mungecodecorder codecprefernce not set`);	
+//        return description;
+//    }
+
+  if(this.isP2P){
+    logger.info(`inytelog mungecodecorder in customP2P`);
+    // set the local description to include the b=as parameter
+    const customParsedSDP = transform.parse(description.sdp);
+    const customMline = customParsedSDP.media.find(m => m.type === MediaType.VIDEO)
+    const customMlineaudio = customParsedSDP.media.find(m => m.type === MediaType.AUDIO)
+    if (!customMline) {
+      logger.info(`inytelog mungecodecorder custom m line not found`);
         return description;
     }
+    const limit = 950;
+    customMline.bandwidth = [ {
+        type: 'AS',
+        limit
+    } ];
 
+    customMlineaudio.bandwidth = [ {
+        type: 'AS',
+        limit
+    } ];
+    return new RTCSessionDescription({
+        type: description.type,
+        sdp: transform.write(customParsedSDP)
+    });
+  }else{
+    logger.info(`inytelog mungecodecorder in customJVB`);
+    // set the local description to include the b=as parameter
+    const customParsedSDP = transform.parse(description.sdp);
+    const customMline = customParsedSDP.media.find(m => m.type === MediaType.VIDEO)
+    const customMlineaudio = customParsedSDP.media.find(m => m.type === MediaType.AUDIO)
+    if (!customMline) {
+      logger.info(`inytelog mungecodecorder custom m line not found`);
+        return description;
+    }
+    const limit = 950;
+    customMline.bandwidth = [ {
+        type: 'AS',
+        limit
+    } ];
+
+    customMlineaudio.bandwidth = [ {
+        type: 'AS',
+        limit
+    } ];
+
+    return new RTCSessionDescription({
+        type: description.type,
+        sdp: transform.write(customParsedSDP)
+    });
+  }
+
+///////////////
     const parsedSdp = transform.parse(description.sdp);
 
     // Only the m-line that defines the source the browser will be sending should need to change.
@@ -2475,6 +2528,7 @@ TraceablePeerConnection.prototype.setLocalDescription = function(description) {
 
     // Munge the order of the codecs based on the preferences set through config.js.
     localDescription = this._mungeCodecOrder(localDescription);
+	logger.info(`inytelogSLD pre-transformSDP`, dumpSDP(localDescription));
     localDescription = this._setVp9MaxBitrates(localDescription);
 
     this.trace('setLocalDescription::postTransform', dumpSDP(localDescription));
@@ -2534,6 +2588,7 @@ TraceablePeerConnection.prototype.setRemoteDescription = function(description) {
     let remoteDescription = description;
 
     this.trace('setRemoteDescription::preTransform', dumpSDP(description));
+	
 
     // Munge stereo flag and opusMaxAverageBitrate based on config.js
     remoteDescription = this._mungeOpus(remoteDescription);
@@ -2569,6 +2624,7 @@ TraceablePeerConnection.prototype.setRemoteDescription = function(description) {
 
     // Munge the order of the codecs based on the preferences set through config.js.
     remoteDescription = this._mungeCodecOrder(remoteDescription);
+	logger.info(`inytelogSRD pre-transformSDP`, dumpSDP(remoteDescription));
     this.trace('setRemoteDescription::postTransform (munge codec order)', dumpSDP(remoteDescription));
 
     return new Promise((resolve, reject) => {

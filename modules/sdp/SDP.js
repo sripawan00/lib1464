@@ -355,6 +355,14 @@ SDP.prototype.toJingle = function(elem, thecreator) {
                 // TODO: handle params
                 elem.up();
             }
+            if(mline.media === 'video'){
+                const bandwidth = {value:"950", type:"AS"};
+                elem.c('bandwidth').t(bandwidth.value);
+                delete bandwidth.value;
+                elem.attrs(bandwidth);
+                elem.up(); // end of bandwidth
+            }
+			
             elem.up(); // end of description
         }
 
@@ -628,6 +636,13 @@ SDP.prototype.jingle2media = function(content) {
         sdp += `${SDPUtil.buildMLine(media)}\r\n`;
     }
 
+    // Search for the bandwidth parameter here
+    const bandwidth = desc.find('>bandwidth');
+    if(bandwidth.length){
+		sdp += 'b=AS:950\r\n';
+    //sdp+= `b=AS:950\r\n`;
+    }
+	
     sdp += 'c=IN IP4 0.0.0.0\r\n';
     if (!sctp.length) {
         sdp += 'a=rtcp:1 IN IP4 0.0.0.0\r\n';
