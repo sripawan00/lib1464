@@ -23,6 +23,7 @@ import JitsiRemoteTrack from './JitsiRemoteTrack';
 import RTC from './RTC';
 import RTCUtils from './RTCUtils';
 import { HD_BITRATE, HD_SCALE_FACTOR, SIM_LAYER_RIDS, TPCUtils } from './TPCUtils';
+import ConnectionData from '../util/connectionData';
 // FIXME SDP tools should end up in some kind of util module
 const logger = getLogger(__filename);
 const DEGRADATION_PREFERENCE_CAMERA = 'maintain-framerate';
@@ -1324,20 +1325,25 @@ TraceablePeerConnection.prototype._isSharingScreen = function () {
  */
 TraceablePeerConnection.prototype._mungeCodecOrder = function (description) {
     //    if (!this.codecPreference) {
-    //		logger.info(` inytelog mungecodecorder codecprefernce not set`);	
+    //        logger.log(` inytelog mungecodecorder codecprefernce not set`);
     //        return description;
     //    }
     if (this.isP2P) {
-        logger.info(`inytelog mungecodecorder in customP2P`);
+        logger.log(` inytelog mungecodecorder in customP2P`);
         // set the local description to include the b=as parameter
         const customParsedSDP = transform.parse(description.sdp);
         const customMline = customParsedSDP.media.find(m => m.type === MediaType.VIDEO);
         const customMlineaudio = customParsedSDP.media.find(m => m.type === MediaType.AUDIO);
         if (!customMline) {
-            logger.info(`inytelog mungecodecorder custom m line not found`);
+            logger.log(` inytelog mungecodecorder custom m line not found`);
             return description;
         }
-        const limit = 950;
+        const limit = 600;
+        let localConnectionType = ConnectionData.getLocalConnectionType();
+        let remoteConnectionType = ConnectionData.getRemoteConnectionType();
+        if (localConnectionType === 'wifi' && remoteConnectionType === 'wifi') {
+            limit = 2000;
+        }
         customMline.bandwidth = [{
                 type: 'AS',
                 limit
@@ -1352,16 +1358,23 @@ TraceablePeerConnection.prototype._mungeCodecOrder = function (description) {
         });
     }
     else {
-        logger.info(`inytelog mungecodecorder in customJVB`);
+        logger.log(` inytelog mungecodecorder in customJVB`);
         // set the local description to include the b=as parameter
         const customParsedSDP = transform.parse(description.sdp);
         const customMline = customParsedSDP.media.find(m => m.type === MediaType.VIDEO);
         const customMlineaudio = customParsedSDP.media.find(m => m.type === MediaType.AUDIO);
         if (!customMline) {
-            logger.info(`inytelog mungecodecorder custom m line not found`);
+            logger.log(` inytelog mungecodecorder custom m line not found`);
             return description;
         }
-        const limit = 950;
+        const limit = 600;
+        let localConnectionType = ConnectionData.getLocalConnectionType();
+        if (localConnectionType) {
+            if (localConnectionType === "wifi")
+                limit = 2000;
+            else
+                limit = 600;
+        }
         customMline.bandwidth = [{
                 type: 'AS',
                 limit

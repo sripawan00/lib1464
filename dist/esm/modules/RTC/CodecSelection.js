@@ -35,7 +35,7 @@ export class CodecSelection {
         // Check if the codec values passed are valid.
         const jvbCodec = this._getCodecMimeType(options.jvbCodec);
         //const p2pCodec = this._getCodecMimeType(options.p2pCodec);
-        const p2pCodec = CodecMimeType.VP8;
+        const p2pCodec = CodecMimeType.H264;
         this.jvbPreferredCodec = jvbCodec && this._isCodecSupported(jvbCodec) ? jvbCodec : CodecMimeType.VP8;
         this.p2pPreferredCodec = p2pCodec && this._isCodecSupported(p2pCodec) ? p2pCodec : CodecMimeType.VP8;
         logger.debug(`Codec preferences for the conference are JVB: ${this.jvbPreferredCodec},
